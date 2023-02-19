@@ -1,0 +1,25 @@
+import sqlite3
+import pandas as pd
+
+def compute_pnl(strategy_id: str, *args, **kwargs) -> float:
+    conn = sqlite3.connect('trades.sqlite')
+    df = pd.read_sql('SELECT * FROM epex_12_20_12_13' ,conn)
+    pnl_value = 0.0
+    strategy_list = df['strategy'].tolist()
+    side_list = df['side'].tolist()
+    df['amount'] = df.price * df.quantity
+    amount_list = df['amount'].tolist()
+    amount_index=0
+
+    for side in side_list:
+        if side == "buy":
+            amount_list[amount_index]*=-1
+        amount_index+=1
+
+    strategy_index=0
+
+    for strategy in strategy_list:
+        if strategy == strategy_id:
+            pnl_value += amount_list[strategy_index]
+        strategy_index+=1
+    return {strategy_id: pnl_value}
